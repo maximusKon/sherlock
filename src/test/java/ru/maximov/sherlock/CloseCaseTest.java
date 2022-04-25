@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.HttpStatus;
@@ -15,9 +16,13 @@ import ru.maximov.sherlock.entity.CaseEntity;
 import ru.maximov.sherlock.entity.CaseResult;
 import ru.maximov.sherlock.entity.CaseStatus;
 import ru.maximov.sherlock.integration.newscotlandyard.UpdateCaseInput;
+import ru.maximov.sherlock.testassistants.CaseTestAssistant;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class CloseCaseTest extends BaseTest {
+
+    @Autowired
+    private CaseTestAssistant caseTestAssistant;
 
     @Captor
     private ArgumentCaptor<UpdateCaseInput> caseInputArgumentCaptor;
@@ -26,7 +31,11 @@ class CloseCaseTest extends BaseTest {
     void closeSuccess() {
         final LocalDateTime closeTime = mockTime();
 
-        CaseEntity caseEntity = createCaseEntity("The Hound of the Baskervilles");
+        CaseEntity caseEntity = caseTestAssistant.save(
+            caseTestAssistant.newCaseEntity()
+                .description("The Hound of the Baskervilles")
+                .build()
+        );
 
         mockUpdate();
 
@@ -44,7 +53,7 @@ class CloseCaseTest extends BaseTest {
         assertThat(expectedInput.getStatus()).isEqualTo("Close");
         assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
 
-        final var resultCaseEntity = repository.findById(caseEntity.getId()).get();
+        final var resultCaseEntity = caseTestAssistant.findById(caseEntity.getId());
         assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
         assertThat(resultCaseEntity.getResult()).isEqualTo(CaseResult.SUCCESS);
         assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
@@ -54,7 +63,11 @@ class CloseCaseTest extends BaseTest {
     void closeFail() {
         final LocalDateTime closeTime = mockTime();
 
-        CaseEntity caseEntity = createCaseEntity("The Reichenbach Fall");
+        CaseEntity caseEntity = caseTestAssistant.save(
+            caseTestAssistant.newCaseEntity()
+                .description("The Reichenbach Fall")
+                .build()
+        );
 
         mockUpdate();
 
@@ -73,7 +86,7 @@ class CloseCaseTest extends BaseTest {
         assertThat(expectedInput.getStatus()).isEqualTo("Close");
         assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
 
-        final var resultCaseEntity = repository.findById(caseEntity.getId()).get();
+        final var resultCaseEntity = caseTestAssistant.findById(caseEntity.getId());
         assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
         assertThat(resultCaseEntity.getResult()).isEqualTo(CaseResult.FAIL);
         assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
