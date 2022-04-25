@@ -46,33 +46,29 @@ class CloseCaseTest {
 
     @Test
     void closeSuccess() {
-        final LocalDateTime closeTime = mockTime();
-
-        CaseEntity caseEntity = prepareToComplete("The Hound of the Baskervilles");
-
-        final var request = new CloseCaseRequest(CaseResult.SUCCESS);
-
-        invokeComplete(caseEntity, request);
-
-        assertComplete(closeTime, caseEntity, request, CaseResult.SUCCESS);
+        completeTest(CaseResult.SUCCESS, "The Hound of the Baskervilles");
     }
 
     @Test
     void closeFail() {
+        completeTest(CaseResult.FAIL, "The Reichenbach Fall");
+    }
+
+    private void completeTest(CaseResult result, String description) {
         final LocalDateTime closeTime = mockTime();
 
-        CaseEntity caseEntity = prepareToComplete("The Reichenbach Fall");
+        CaseEntity caseEntity = prepareToComplete(description);
 
-        final var request = new CloseCaseRequest(CaseResult.FAIL, "Code is a fake");
+        final var request = new CloseCaseRequest(result);
 
         invokeComplete(caseEntity, request);
 
-        assertComplete(closeTime, caseEntity, request, CaseResult.FAIL);
+        assertComplete(closeTime, caseEntity, request, result);
     }
 
     @NotNull
-    private CaseEntity prepareToComplete(String s) {
-        CaseEntity caseEntity = createCaseEntity(s);
+    private CaseEntity prepareToComplete(String description) {
+        CaseEntity caseEntity = createCaseEntity(description);
 
         mockUpdate();
         return caseEntity;
