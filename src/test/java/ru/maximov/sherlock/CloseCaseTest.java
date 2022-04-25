@@ -56,17 +56,9 @@ class CloseCaseTest {
 
         invokeComplete(caseEntity, request);
 
-        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
-        final var expectedInput = caseInputArgumentCaptor.getValue();
-        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
-        assertThat(expectedInput.getResult()).isEqualTo("Successfully");
-        assertThat(expectedInput.getStatus()).isEqualTo("Close");
-        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
+        assertUpdateSuccessCaseIntegration(closeTime, caseEntity);
 
-        final var resultCaseEntity = repository.findById(caseEntity.getId()).get();
-        assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
-        assertThat(resultCaseEntity.getResult()).isEqualTo(CaseResult.SUCCESS);
-        assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
+        assertCaseCompleted(closeTime, caseEntity, CaseResult.SUCCESS);
     }
 
     @Test
@@ -81,18 +73,9 @@ class CloseCaseTest {
 
         invokeComplete(caseEntity, request);
 
-        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
-        final var expectedInput = caseInputArgumentCaptor.getValue();
-        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
-        assertThat(expectedInput.getResult()).isEqualTo("Failure");
-        assertThat(expectedInput.getResultComment()).isEqualTo("Code is a fake");
-        assertThat(expectedInput.getStatus()).isEqualTo("Close");
-        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
+        assertUpdateFailureIntegration(closeTime, caseEntity);
 
-        final var resultCaseEntity = repository.findById(caseEntity.getId()).get();
-        assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
-        assertThat(resultCaseEntity.getResult()).isEqualTo(CaseResult.FAIL);
-        assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
+        assertCaseCompleted(closeTime, caseEntity, CaseResult.FAIL);
     }
 
     private void invokeComplete(CaseEntity caseEntity, CloseCaseRequest request) {
@@ -124,5 +107,31 @@ class CloseCaseTest {
         caseEntity.setStatus(CaseStatus.NEW);
         caseEntity = repository.save(caseEntity);
         return caseEntity;
+    }
+
+    private void assertUpdateSuccessCaseIntegration(LocalDateTime closeTime, CaseEntity caseEntity) {
+        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
+        final var expectedInput = caseInputArgumentCaptor.getValue();
+        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
+        assertThat(expectedInput.getResult()).isEqualTo("Successfully");
+        assertThat(expectedInput.getStatus()).isEqualTo("Close");
+        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
+    }
+
+    private void assertUpdateFailureIntegration(LocalDateTime closeTime, CaseEntity caseEntity) {
+        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
+        final var expectedInput = caseInputArgumentCaptor.getValue();
+        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
+        assertThat(expectedInput.getResult()).isEqualTo("Failure");
+        assertThat(expectedInput.getResultComment()).isEqualTo("Code is a fake");
+        assertThat(expectedInput.getStatus()).isEqualTo("Close");
+        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
+    }
+
+    private void assertCaseCompleted(LocalDateTime closeTime, CaseEntity caseEntity, CaseResult success) {
+        final var resultCaseEntity = repository.findById(caseEntity.getId()).get();
+        assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
+        assertThat(resultCaseEntity.getResult()).isEqualTo(success);
+        assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
     }
 }
