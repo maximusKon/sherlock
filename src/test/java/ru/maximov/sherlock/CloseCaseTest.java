@@ -54,9 +54,7 @@ class CloseCaseTest {
 
         invokeComplete(caseEntity, request);
 
-        assertUpdateIntegration(closeTime, caseEntity, request);
-
-        assertCaseCompleted(closeTime, caseEntity, CaseResult.SUCCESS);
+        assertComplete(closeTime, caseEntity, request, CaseResult.SUCCESS);
     }
 
     @Test
@@ -69,9 +67,7 @@ class CloseCaseTest {
 
         invokeComplete(caseEntity, request);
 
-        assertUpdateIntegration(closeTime, caseEntity, request);
-
-        assertCaseCompleted(closeTime, caseEntity, CaseResult.FAIL);
+        assertComplete(closeTime, caseEntity, request, CaseResult.FAIL);
     }
 
     @NotNull
@@ -80,6 +76,13 @@ class CloseCaseTest {
 
         mockUpdate();
         return caseEntity;
+    }
+
+    private void assertComplete(LocalDateTime closeTime, CaseEntity caseEntity, CloseCaseRequest request,
+                                CaseResult success) {
+        assertUpdateIntegration(closeTime, caseEntity, request);
+
+        assertCaseCompleted(closeTime, caseEntity, success);
     }
 
     private void invokeComplete(CaseEntity caseEntity, CloseCaseRequest request) {
