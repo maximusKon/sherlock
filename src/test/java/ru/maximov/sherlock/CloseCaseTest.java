@@ -56,7 +56,7 @@ class CloseCaseTest {
 
         invokeComplete(caseEntity, request);
 
-        assertUpdateSuccessCaseIntegration(closeTime, caseEntity);
+        assertUpdateIntegration(closeTime, caseEntity, request);
 
         assertCaseCompleted(closeTime, caseEntity, CaseResult.SUCCESS);
     }
@@ -73,7 +73,7 @@ class CloseCaseTest {
 
         invokeComplete(caseEntity, request);
 
-        assertUpdateFailureIntegration(closeTime, caseEntity);
+        assertUpdateIntegration(closeTime, caseEntity, request);
 
         assertCaseCompleted(closeTime, caseEntity, CaseResult.FAIL);
     }
@@ -109,21 +109,16 @@ class CloseCaseTest {
         return caseEntity;
     }
 
-    private void assertUpdateSuccessCaseIntegration(LocalDateTime closeTime, CaseEntity caseEntity) {
+    private void assertUpdateIntegration(LocalDateTime closeTime, CaseEntity caseEntity, CloseCaseRequest request) {
         verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
         final var expectedInput = caseInputArgumentCaptor.getValue();
         assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
-        assertThat(expectedInput.getResult()).isEqualTo("Successfully");
-        assertThat(expectedInput.getStatus()).isEqualTo("Close");
-        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
-    }
-
-    private void assertUpdateFailureIntegration(LocalDateTime closeTime, CaseEntity caseEntity) {
-        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
-        final var expectedInput = caseInputArgumentCaptor.getValue();
-        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
-        assertThat(expectedInput.getResult()).isEqualTo("Failure");
-        assertThat(expectedInput.getResultComment()).isEqualTo("Code is a fake");
+        if (request.result().equals(CaseResult.SUCCESS)) {
+            assertThat(expectedInput.getResult()).isEqualTo("Successfully");
+        } else {
+            assertThat(expectedInput.getResult()).isEqualTo("Failure");
+        }
+        assertThat(expectedInput.getResultComment()).isEqualTo(request.resultComment());
         assertThat(expectedInput.getStatus()).isEqualTo("Close");
         assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
     }
