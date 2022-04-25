@@ -54,10 +54,7 @@ class CloseCaseTest {
 
         final var request = new CloseCaseRequest(CaseResult.SUCCESS);
 
-        final var responseEntity =
-            restTemplate.postForEntity("/api/v1/case/" + caseEntity.getId() + "/close", request, Void.class);
-
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        invokeComplete(caseEntity, request);
 
         verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
         final var expectedInput = caseInputArgumentCaptor.getValue();
@@ -82,10 +79,7 @@ class CloseCaseTest {
 
         final var request = new CloseCaseRequest(CaseResult.FAIL, "Code is a fake");
 
-        final var responseEntity =
-            restTemplate.postForEntity("/api/v1/case/" + caseEntity.getId() + "/close", request, Void.class);
-
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        invokeComplete(caseEntity, request);
 
         verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
         final var expectedInput = caseInputArgumentCaptor.getValue();
@@ -99,6 +93,13 @@ class CloseCaseTest {
         assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
         assertThat(resultCaseEntity.getResult()).isEqualTo(CaseResult.FAIL);
         assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
+    }
+
+    private void invokeComplete(CaseEntity caseEntity, CloseCaseRequest request) {
+        final var responseEntity =
+            restTemplate.postForEntity("/api/v1/case/" + caseEntity.getId() + "/close", request, Void.class);
+
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @NotNull
