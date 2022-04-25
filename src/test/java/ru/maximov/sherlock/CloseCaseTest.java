@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import ru.maximov.sherlock.controller.dto.CloseCaseRequest;
 import ru.maximov.sherlock.entity.CaseEntity;
@@ -17,7 +18,10 @@ import ru.maximov.sherlock.testassistants.CaseTestAssistant;
 import ru.maximov.sherlock.testassistants.TimeProviderTestAssistant;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-class CloseCaseTest extends BaseTest {
+class CloseCaseTest {
+
+    @Autowired
+    protected TestRestTemplate restTemplate;
 
     @Autowired
     private CaseTestAssistant caseTestAssistant;
