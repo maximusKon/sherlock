@@ -1,11 +1,14 @@
 package ru.maximov.sherlock;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -37,6 +40,9 @@ class CloseCaseTest {
     @MockBean
     private TimeProvider timeProvider;
 
+    @Captor
+    private ArgumentCaptor<UpdateCaseInput> caseInputArgumentCaptor;
+
     @Test
     void closeSuccess() {
         final var closeTime = LocalDateTime.now().withNano(0);
@@ -48,25 +54,24 @@ class CloseCaseTest {
         caseEntity.setStatus(CaseStatus.NEW);
         caseEntity = repository.save(caseEntity);
 
-        final var updateCaseInput = new UpdateCaseInput();
-        updateCaseInput.setCaseId(caseEntity.getCaseId());
-        updateCaseInput.setResult("Successfully");
-        updateCaseInput.setStatus("Close");
-        updateCaseInput.setCompletedTime(closeTime);
-
         final var updateCaseOutput = new UpdateCaseOutput();
         updateCaseOutput.setCode("001");
         updateCaseOutput.setMessage("SUCCESS");
-        when(caseReportsDepartment.updateCase(updateCaseInput)).thenReturn(updateCaseOutput);
+        when(caseReportsDepartment.updateCase(any(UpdateCaseInput.class))).thenReturn(updateCaseOutput);
 
         final var request = new CloseCaseRequest(CaseResult.SUCCESS);
 
         final var responseEntity =
             restTemplate.postForEntity("/api/v1/case/" + caseEntity.getId() + "/close", request, Void.class);
 
-        verify(caseReportsDepartment).updateCase(updateCaseInput);
-
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
+        final var expectedInput = caseInputArgumentCaptor.getValue();
+        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
+        assertThat(expectedInput.getResult()).isEqualTo("Successfully");
+        assertThat(expectedInput.getStatus()).isEqualTo("Close");
+        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
 
         final var resultCaseEntity = repository.findById(caseEntity.getId()).get();
         assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
@@ -85,26 +90,25 @@ class CloseCaseTest {
         caseEntity.setStatus(CaseStatus.NEW);
         caseEntity = repository.save(caseEntity);
 
-        final var updateCaseInput = new UpdateCaseInput();
-        updateCaseInput.setCaseId(caseEntity.getCaseId());
-        updateCaseInput.setResult("Failure");
-        updateCaseInput.setResultComment("Code is a fake");
-        updateCaseInput.setStatus("Close");
-        updateCaseInput.setCompletedTime(closeTime);
-
         final var updateCaseOutput = new UpdateCaseOutput();
         updateCaseOutput.setCode("001");
         updateCaseOutput.setMessage("SUCCESS");
-        when(caseReportsDepartment.updateCase(updateCaseInput)).thenReturn(updateCaseOutput);
+        when(caseReportsDepartment.updateCase(any(UpdateCaseInput.class))).thenReturn(updateCaseOutput);
 
         final var request = new CloseCaseRequest(CaseResult.FAIL, "Code is a fake");
 
         final var responseEntity =
             restTemplate.postForEntity("/api/v1/case/" + caseEntity.getId() + "/close", request, Void.class);
 
-        verify(caseReportsDepartment).updateCase(updateCaseInput);
-
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
+        final var expectedInput = caseInputArgumentCaptor.getValue();
+        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
+        assertThat(expectedInput.getResult()).isEqualTo("Failure");
+        assertThat(expectedInput.getResultComment()).isEqualTo("Code is a fake");
+        assertThat(expectedInput.getStatus()).isEqualTo("Close");
+        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
 
         final var resultCaseEntity = repository.findById(caseEntity.getId()).get();
         assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
