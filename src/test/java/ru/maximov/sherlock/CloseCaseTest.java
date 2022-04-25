@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -45,19 +46,11 @@ class CloseCaseTest {
 
     @Test
     void closeSuccess() {
-        final var closeTime = LocalDateTime.now().withNano(0);
-        when(timeProvider.now()).thenReturn(closeTime);
+        final LocalDateTime closeTime = mockTime();
 
-        var caseEntity = new CaseEntity();
-        caseEntity.setCaseId("CASE_1");
-        caseEntity.setDescription("The Hound of the Baskervilles");
-        caseEntity.setStatus(CaseStatus.NEW);
-        caseEntity = repository.save(caseEntity);
+        CaseEntity caseEntity = createCaseEntity("The Hound of the Baskervilles");
 
-        final var updateCaseOutput = new UpdateCaseOutput();
-        updateCaseOutput.setCode("001");
-        updateCaseOutput.setMessage("SUCCESS");
-        when(caseReportsDepartment.updateCase(any(UpdateCaseInput.class))).thenReturn(updateCaseOutput);
+        mockUpdate();
 
         final var request = new CloseCaseRequest(CaseResult.SUCCESS);
 
@@ -81,19 +74,11 @@ class CloseCaseTest {
 
     @Test
     void closeFail() {
-        final var closeTime = LocalDateTime.now().withNano(0);
-        when(timeProvider.now()).thenReturn(closeTime);
+        final LocalDateTime closeTime = mockTime();
 
-        var caseEntity = new CaseEntity();
-        caseEntity.setCaseId("CASE_1");
-        caseEntity.setDescription("The Reichenbach Fall");
-        caseEntity.setStatus(CaseStatus.NEW);
-        caseEntity = repository.save(caseEntity);
+        CaseEntity caseEntity = createCaseEntity("The Reichenbach Fall");
 
-        final var updateCaseOutput = new UpdateCaseOutput();
-        updateCaseOutput.setCode("001");
-        updateCaseOutput.setMessage("SUCCESS");
-        when(caseReportsDepartment.updateCase(any(UpdateCaseInput.class))).thenReturn(updateCaseOutput);
+        mockUpdate();
 
         final var request = new CloseCaseRequest(CaseResult.FAIL, "Code is a fake");
 
@@ -114,5 +99,29 @@ class CloseCaseTest {
         assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
         assertThat(resultCaseEntity.getResult()).isEqualTo(CaseResult.FAIL);
         assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
+    }
+
+    @NotNull
+    private LocalDateTime mockTime() {
+        final var closeTime = LocalDateTime.now().withNano(0);
+        when(timeProvider.now()).thenReturn(closeTime);
+        return closeTime;
+    }
+
+    private void mockUpdate() {
+        final var updateCaseOutput = new UpdateCaseOutput();
+        updateCaseOutput.setCode("001");
+        updateCaseOutput.setMessage("SUCCESS");
+        when(caseReportsDepartment.updateCase(any(UpdateCaseInput.class))).thenReturn(updateCaseOutput);
+    }
+
+    @NotNull
+    private CaseEntity createCaseEntity(String description) {
+        var caseEntity = new CaseEntity();
+        caseEntity.setCaseId("CASE_1");
+        caseEntity.setDescription(description);
+        caseEntity.setStatus(CaseStatus.NEW);
+        caseEntity = repository.save(caseEntity);
+        return caseEntity;
     }
 }

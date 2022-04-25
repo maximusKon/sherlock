@@ -15,8 +15,12 @@
       <column name="case_id" type="varchar(50)">
         <constraints nullable="false"/>
       </column>
-      <column name="description" type="varchar(50)"/>
-      <column name="status" type="varchar(50)"/>
+      <column name="description" type="varchar(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="varchar(50)">
+        <constraints nullable="false"/>
+      </column>
       <column name="result" type="varchar(50)"/>
       <column name="result_comment" type="varchar(50)"/>
       <column name="completed_time" type="datetime"/>
