@@ -3,6 +3,7 @@ package ru.maximov.sherlock;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -97,4 +98,8 @@ class CloseCaseTest {
         assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
     }
 
+    @AfterEach
+    void tearDown() {
+        caseTestAssistant.clean();
+    }
 }

@@ -7,7 +7,7 @@ import ru.maximov.sherlock.entity.CaseStatus;
 import ru.maximov.sherlock.repository.CaseRepository;
 
 @Component
-public class CaseTestAssistant {
+public class CaseTestAssistant implements CleanableTestAssistant {
 
     private final CaseRepository repository;
 
@@ -30,4 +30,10 @@ public class CaseTestAssistant {
     public CaseEntity findById(Long id) {
         return repository.findById(id).get();
     }
+
+    @Override
+    public void clean() {
+        repository.deleteAll();
+    }
+
 }
