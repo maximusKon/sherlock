@@ -14,6 +14,7 @@ import ru.maximov.sherlock.entity.CaseResult;
 import ru.maximov.sherlock.entity.CaseStatus;
 import ru.maximov.sherlock.testassistants.CaseReportsDepartmentTestAssistant;
 import ru.maximov.sherlock.testassistants.CaseTestAssistant;
+import ru.maximov.sherlock.testassistants.TimeProviderTestAssistant;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class CloseCaseTest extends BaseTest {
@@ -24,11 +25,14 @@ class CloseCaseTest extends BaseTest {
     @Autowired
     private CaseReportsDepartmentTestAssistant caseReportsDepartmentTestAssistant;
 
+    @Autowired
+    private TimeProviderTestAssistant timeProviderTestAssistant;
+
     @Test
     void closeSuccess() {
-        final LocalDateTime closeTime = mockTime();
+        final LocalDateTime closeTime = timeProviderTestAssistant.mockCurrentTime();
 
-        CaseEntity caseEntity = caseTestAssistant.save(
+        final CaseEntity caseEntity = caseTestAssistant.save(
             caseTestAssistant.newCaseEntity()
                 .description("The Hound of the Baskervilles")
                 .build()
@@ -58,9 +62,9 @@ class CloseCaseTest extends BaseTest {
 
     @Test
     void closeFail() {
-        final LocalDateTime closeTime = mockTime();
+        final LocalDateTime closeTime = timeProviderTestAssistant.mockCurrentTime();
 
-        CaseEntity caseEntity = caseTestAssistant.save(
+        final CaseEntity caseEntity = caseTestAssistant.save(
             caseTestAssistant.newCaseEntity()
                 .description("The Reichenbach Fall")
                 .build()
