@@ -46,46 +46,59 @@ class CloseCaseTest {
 
     @Test
     void closeSuccess() {
-        completeTest(CaseResult.SUCCESS, "The Hound of the Baskervilles");
-    }
-
-    @Test
-    void closeFail() {
-        completeTest(CaseResult.FAIL, "The Reichenbach Fall");
-    }
-
-    private void completeTest(CaseResult result, String description) {
         final LocalDateTime closeTime = mockTime();
 
-        CaseEntity caseEntity = prepareToComplete(description);
-
-        final var request = new CloseCaseRequest(result);
-
-        invokeComplete(caseEntity, request);
-
-        assertComplete(closeTime, caseEntity, request, result);
-    }
-
-    @NotNull
-    private CaseEntity prepareToComplete(String description) {
-        CaseEntity caseEntity = createCaseEntity(description);
+        CaseEntity caseEntity = createCaseEntity("The Hound of the Baskervilles");
 
         mockUpdate();
-        return caseEntity;
-    }
 
-    private void assertComplete(LocalDateTime closeTime, CaseEntity caseEntity, CloseCaseRequest request,
-                                CaseResult success) {
-        assertUpdateIntegration(closeTime, caseEntity, request);
+        final var request = new CloseCaseRequest(CaseResult.SUCCESS);
 
-        assertCaseCompleted(closeTime, caseEntity, success);
-    }
-
-    private void invokeComplete(CaseEntity caseEntity, CloseCaseRequest request) {
         final var responseEntity =
             restTemplate.postForEntity("/api/v1/case/" + caseEntity.getId() + "/close", request, Void.class);
 
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
+        final var expectedInput = caseInputArgumentCaptor.getValue();
+        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
+        assertThat(expectedInput.getResult()).isEqualTo("Successfully");
+        assertThat(expectedInput.getStatus()).isEqualTo("Close");
+        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
+
+        final var resultCaseEntity = repository.findById(caseEntity.getId()).get();
+        assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
+        assertThat(resultCaseEntity.getResult()).isEqualTo(CaseResult.SUCCESS);
+        assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
+    }
+
+    @Test
+    void closeFail() {
+        final LocalDateTime closeTime = mockTime();
+
+        CaseEntity caseEntity = createCaseEntity("The Reichenbach Fall");
+
+        mockUpdate();
+
+        final var request = new CloseCaseRequest(CaseResult.FAIL);
+
+        final var responseEntity =
+            restTemplate.postForEntity("/api/v1/case/" + caseEntity.getId() + "/close", request, Void.class);
+
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
+        final var expectedInput = caseInputArgumentCaptor.getValue();
+        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
+        assertThat(expectedInput.getResult()).isEqualTo("Failure");
+        assertThat(expectedInput.getResultComment()).isEqualTo(request.resultComment());
+        assertThat(expectedInput.getStatus()).isEqualTo("Close");
+        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
+
+        final var resultCaseEntity = repository.findById(caseEntity.getId()).get();
+        assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
+        assertThat(resultCaseEntity.getResult()).isEqualTo(CaseResult.FAIL);
+        assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
     }
 
     @NotNull
@@ -112,24 +125,4 @@ class CloseCaseTest {
         return caseEntity;
     }
 
-    private void assertUpdateIntegration(LocalDateTime closeTime, CaseEntity caseEntity, CloseCaseRequest request) {
-        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
-        final var expectedInput = caseInputArgumentCaptor.getValue();
-        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
-        if (request.result().equals(CaseResult.SUCCESS)) {
-            assertThat(expectedInput.getResult()).isEqualTo("Successfully");
-        } else {
-            assertThat(expectedInput.getResult()).isEqualTo("Failure");
-        }
-        assertThat(expectedInput.getResultComment()).isEqualTo(request.resultComment());
-        assertThat(expectedInput.getStatus()).isEqualTo("Close");
-        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
-    }
-
-    private void assertCaseCompleted(LocalDateTime closeTime, CaseEntity caseEntity, CaseResult success) {
-        final var resultCaseEntity = repository.findById(caseEntity.getId()).get();
-        assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
-        assertThat(resultCaseEntity.getResult()).isEqualTo(success);
-        assertThat(resultCaseEntity.getCompletedTime()).isEqualTo(closeTime);
-    }
 }
