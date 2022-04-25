@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+  <changeSet author="j.watson" id="create cases table">
+
+    <createSequence incrementBy="1" schemaName="public" sequenceName="cases_seq" startValue="1"/>
+
+    <createTable schemaName="public" tableName="cases">
+      <column name="id" type="bigint">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="case_id" type="varchar(50)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="varchar(50)"/>
+      <column name="status" type="varchar(50)"/>
+      <column name="result" type="varchar(50)"/>
+      <column name="result_comment" type="varchar(50)"/>
+      <column name="completed_time" type="datetime"/>
+    </createTable>
+
+  </changeSet>
+
+</databaseChangeLog>

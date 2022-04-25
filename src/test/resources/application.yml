@@ -1,0 +1,14 @@
+spring:
+  liquibase:
+    default-schema: public
+    contexts: pg
+    change-log: classpath:db/changelog/master.xml
+  datasource:
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    url: jdbc:tc:postgresql:11.1://hostname/databasename?TC_DAEMON=true
+    username: test
+  jpa:
+    properties:
+      hibernate:
+        default_schema: public
+        format_sql: false
