@@ -1,12 +1,9 @@
 package ru.maximov.sherlock;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
 
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -15,7 +12,7 @@ import ru.maximov.sherlock.controller.dto.CloseCaseRequest;
 import ru.maximov.sherlock.entity.CaseEntity;
 import ru.maximov.sherlock.entity.CaseResult;
 import ru.maximov.sherlock.entity.CaseStatus;
-import ru.maximov.sherlock.integration.newscotlandyard.UpdateCaseInput;
+import ru.maximov.sherlock.testassistants.CaseReportsDepartmentTestAssistant;
 import ru.maximov.sherlock.testassistants.CaseTestAssistant;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -24,8 +21,8 @@ class CloseCaseTest extends BaseTest {
     @Autowired
     private CaseTestAssistant caseTestAssistant;
 
-    @Captor
-    private ArgumentCaptor<UpdateCaseInput> caseInputArgumentCaptor;
+    @Autowired
+    private CaseReportsDepartmentTestAssistant caseReportsDepartmentTestAssistant;
 
     @Test
     void closeSuccess() {
@@ -37,7 +34,7 @@ class CloseCaseTest extends BaseTest {
                 .build()
         );
 
-        mockUpdate();
+        caseReportsDepartmentTestAssistant.mockSuccessUpdate();
 
         final var request = new CloseCaseRequest(CaseResult.SUCCESS);
 
@@ -46,12 +43,12 @@ class CloseCaseTest extends BaseTest {
 
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
-        final var expectedInput = caseInputArgumentCaptor.getValue();
-        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
-        assertThat(expectedInput.getResult()).isEqualTo("Successfully");
-        assertThat(expectedInput.getStatus()).isEqualTo("Close");
-        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
+        caseReportsDepartmentTestAssistant.assertInteraction(expectedInput -> {
+            assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
+            assertThat(expectedInput.getResult()).isEqualTo("Successfully");
+            assertThat(expectedInput.getStatus()).isEqualTo("Close");
+            assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
+        });
 
         final var resultCaseEntity = caseTestAssistant.findById(caseEntity.getId());
         assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
@@ -69,7 +66,7 @@ class CloseCaseTest extends BaseTest {
                 .build()
         );
 
-        mockUpdate();
+        caseReportsDepartmentTestAssistant.mockSuccessUpdate();
 
         final var request = new CloseCaseRequest(CaseResult.FAIL);
 
@@ -78,13 +75,13 @@ class CloseCaseTest extends BaseTest {
 
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        verify(caseReportsDepartment).updateCase(caseInputArgumentCaptor.capture());
-        final var expectedInput = caseInputArgumentCaptor.getValue();
-        assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
-        assertThat(expectedInput.getResult()).isEqualTo("Failure");
-        assertThat(expectedInput.getResultComment()).isEqualTo(request.resultComment());
-        assertThat(expectedInput.getStatus()).isEqualTo("Close");
-        assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
+        caseReportsDepartmentTestAssistant.assertInteraction(expectedInput -> {
+            assertThat(expectedInput.getCaseId()).isEqualTo(caseEntity.getCaseId());
+            assertThat(expectedInput.getResult()).isEqualTo("Failure");
+            assertThat(expectedInput.getResultComment()).isEqualTo(request.resultComment());
+            assertThat(expectedInput.getStatus()).isEqualTo("Close");
+            assertThat(expectedInput.getCompletedTime()).isEqualTo(closeTime);
+        });
 
         final var resultCaseEntity = caseTestAssistant.findById(caseEntity.getId());
         assertThat(resultCaseEntity.getStatus()).isEqualTo(CaseStatus.COMPLETED);
